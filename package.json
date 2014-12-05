@@ -1,0 +1,44 @@
+{
+  "name": "grunt-contrib-less",
+  "description": "Convert SCSS (SASS) files to Less.",
+  "version": "0.0.1",
+  "homepage": "https://github.com/bassjobsen/grunt-scss2less",
+  "author": {
+    "name": "Bass Jobsen",
+    "url": "http://bassjobsen.weblogs.fm/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bassjobsen/grunt-scss2less.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bassjobsen/grunt-scss2less/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/bassjobsen/grunt-scss2lesss/blob/master/LICENSE-MIT"
+    }
+  ],
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "dependencies": {
+    "async": "^0.2.10",
+    "chalk": "^0.5.1",
+    "lodash": "^2.4.1"
+  },
+  "peerDependencies": {
+    "grunt": "~0.4.0"
+  },
+  "keywords": [
+    "gruntplugin"
+  ],
+  "files": [
+    "tasks",
+    "LICENSE-MIT"
+  ]
+}
