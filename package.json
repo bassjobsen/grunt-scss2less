@@ -1,5 +1,5 @@
 {
-  "name": "grunt-contrib-less",
+  "name": "grunt-scss2less",
   "description": "Convert SCSS (SASS) files to Less.",
   "version": "0.0.1",
   "homepage": "https://github.com/bassjobsen/grunt-scss2less",
