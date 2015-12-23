@@ -5,7 +5,6 @@
  * Copyright (c) 2014 Bass Jobsen, contributors
  * Licensed under the MIT license.
  */
-
 'use strict';
 
 var path = require('path');
@@ -26,10 +25,8 @@ module.exports = function(grunt) {
     if (this.files.length < 1) {
       grunt.verbose.warn('Destination not written because no source files were provided.');
     }
-	
-    async.eachSeries(this.files, function(f, nextFileObj) {
-      var destFile = f.dest;
 
+    async.eachSeries(this.files, function(f, nextFileObj) {
       var files = f.src.filter(function(filepath) {
         // Warn on and remove invalid source files (if nonull was set).
         if (!grunt.file.exists(filepath)) {
@@ -42,42 +39,46 @@ module.exports = function(grunt) {
 
       if (files.length === 0) {
         if (f.src.length < 1) {
-          grunt.log.warn('Destination ' + chalk.cyan(destFile) + ' not written because no source files were found.');
+          grunt.log.warn('No source files were found.');
         }
 
         // No src files, goto next target. Warn would have been issued above.
         return nextFileObj();
       }
 
-      var lessCode;
+      var lessCodes = {};
       var i = 0;
 
       async.concatSeries(files, function(file, next) {
-
-       convertSCSS(file, options, function(less, err) {
-          if (!err) {
-            lessCode = less;
-            process.nextTick(next);					
+          convertSCSS(file, options, function(less, err) {
+            if (!err) {
+              lessCodes[file] = less;
+              process.nextTick(next);
+            } else {
+              nextFileObj(err);
+            }
+          });
+        },
+        function() {
+          if (lessCodes.length < 1) {
+            grunt.log.warn('Compiled files were empty.');
           } else {
-            nextFileObj(err);
+            _.forEach(lessCodes, function(lessCode, file) {
+              file = file.replace('sass', 'less').replace('scss', 'less');
+              grunt.file.write(file, lessCode);
+              grunt.log.writeln('File ' + chalk.cyan(file) + ' created');
+            });
           }
+          nextFileObj();
         });
-      }, 
-      function() {
-        if (lessCode.length < 1) {
-          grunt.log.warn('Destination ' + chalk.cyan(destFile) + ' not written because compiled files were empty.');
-        } else {
-          grunt.file.write(destFile, lessCode);
-          grunt.log.writeln('File ' + chalk.cyan(destFile) + ' created');
-        }
-        nextFileObj();
-      });
 
     }, done);
   });
 
   var convertSCSS = function(srcFile, options, callback) {
-    options = _.assign({filename: srcFile}, options);
+    options = _.assign({
+      filename: srcFile
+    }, options);
     options.paths = options.paths || [path.dirname(srcFile)];
 
     if (typeof options.paths === 'function') {
@@ -88,19 +89,18 @@ module.exports = function(grunt) {
       }
     }
 
-
     var css,
-    less,
-    srcCode = grunt.file.read(srcFile);
+      less,
+      srcCode = grunt.file.read(srcFile);
 
-      try {
-        less = convert(srcCode);
-        callback(less, null);
-      } catch (e) {
-        scss2lessError(e, srcFile);
-        callback(less, true);
-      }
-   
+    try {
+      less = convert(srcCode);
+      callback(less, null);
+    } catch (e) {
+      scss2lessError(e, srcFile);
+      callback(less, true);
+    }
+
   };
   var scss2lessError = function(e, file) {
     var message = 'error';
@@ -108,23 +108,23 @@ module.exports = function(grunt) {
     grunt.log.error(message);
     grunt.fail.warn('Error compiling ' + file);
   };
-  
-  var convert = function (source) {
-    source = source.replace(/@mixin /g,'.');
-    source = source.replace(/@include /g,'.');
-    source = source.replace(/\$(\w+)/g,"@$1");
-    source = source.replace(/@extend ([\w\-\.]+);/g,"&:extend( $1 );");
-    source = source.replace(/ !default/g,'');
-    source = source.replace(/#{([^}]+)}/g,"~\"$1\"");
-    source = source.replace(/~\"@(\w+)\"/g,"@{$1}");
-    source = source.replace(/adjust-hue\(/g,'spin(');
-    
-    source = source.replace(/(@if)([^{]+)({)/g,function(match,m1,m2,m3){ 
-		var result = '& when';
-		result += m2.replace(/==/g,'=');
-		result += m3;
-		return result;
-	});
-  return source;
+
+  var convert = function(source) {
+    source = source.replace(/@mixin /g, '.');
+    source = source.replace(/@include /g, '.');
+    source = source.replace(/\$(\w+)/g, "@$1");
+    source = source.replace(/@extend ([\w\-\.]+);/g, "&:extend( $1 );");
+    source = source.replace(/ !default/g, '');
+    source = source.replace(/#{([^}]+)}/g, "~\"$1\"");
+    source = source.replace(/~\"@(\w+)\"/g, "@{$1}");
+    source = source.replace(/adjust-hue\(/g, 'spin(');
+
+    source = source.replace(/(@if)([^{]+)({)/g, function(match, m1, m2, m3) {
+      var result = '& when';
+      result += m2.replace(/==/g, '=');
+      result += m3;
+      return result;
+    });
+    return source;
   };
 };
